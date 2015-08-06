@@ -36,7 +36,7 @@ var getLinks = function(page, options) {
 								})
 								.then(function(childPage) {
 									page.links.push(childPage._id);
-							console.log(i, anchorTags.length);
+									console.log(i, anchorTags.length);
 									if (i == 257) {
 										page.save();
 										console.log("saved");
