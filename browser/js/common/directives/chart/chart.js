@@ -37,7 +37,7 @@ app.directive('scatterPlot', function(PageService) {
           chart.xAxis.tickFormat(d3.format('.02f'));
           chart.yAxis.tickFormat(d3.format('.02f'));
           PageService.getPages().then(function(data) {
-            d3.select('#test1 svg')
+            d3.select('svg')
               .datum(data)
               .call(chart);
             console.log(d3.selectAll("circle"));
