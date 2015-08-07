@@ -8,7 +8,7 @@ app.config(function($stateProvider) {
   });
 });
 
-app.controller('AboutController', function($scope) {
+app.controller('AboutController', function() {
   // register our custom symbols to nvd3
   // make sure your path is valid given any size because size scales if the chart scales.
 })

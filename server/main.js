@@ -7,7 +7,7 @@ var startDb = require('./db');
 
 // Create a node server instance! cOoL!
 var server = require('http').createServer();
-var test = require('./app/crawler/index.js');
+// var test = require('./app/crawler/index.js');
 
 var createApplication = function() {
     var app = require('./app');

@@ -7,11 +7,12 @@ module.exports = router;
 
 
 router.get('/', function(req, res, next) {
-    Page.find({})
+  Page.find({})
     .then(function(pages) {
-        res.json(pages);
+      res.json(pages);
     })
     .then(null, function(err) {
-        next(err);
+      next(err);
     });
+
 });
