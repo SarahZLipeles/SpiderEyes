@@ -26,11 +26,9 @@ app.directive('scatterPlot', function(PageService) {
       nv
       .addGraph(function() {
         chart = nv.models.scatterChart()
-          .showDistX(true)
-          .showDistY(true)
           .useVoronoi(true)
           .height(600)
-          .width(600)
+          .width(1200)
           .color(d3.scale.category10().range())
           .duration(300);
         chart.dispatch.on('renderEnd', function() {
@@ -38,10 +36,27 @@ app.directive('scatterPlot', function(PageService) {
         });
         chart.xAxis.tickFormat(d3.format('.02f'));
         chart.yAxis.tickFormat(d3.format('.02f'));
-        d3.select('#test1 svg')
-          .datum(PageService.randomData(4, 40))
-          .call(chart);
-        nv.utils.windowResize(chart.update);
+        PageService.getPages().then(function(data) {
+          d3.select('#test1 svg')
+            .datum(data)
+            .call(chart);
+          console.log(d3.selectAll("circle"));
+              // .attr("x", function(d) { return x(d.x); })
+              // .attr("y", function(d) { return y(d.y); })
+              // .text("fooLabelsOfScatterPoints");
+          // for (var i = 0; i < data.length; i++) {
+          //   d3.select('svg')
+          //     .append('line')
+          //     .attr({
+          //       x1: lines[l].x1,
+          //       y1: lines[l].y1,
+          //       x2: lines[l].x2,
+          //       y2: lines[l].y2,
+          //       stroke: '#000'
+          //     });
+          // }
+        });
+        // nv.utils.windowResize(chart.update);
         chart.dispatch.on('stateChange', function(e) {
           console.log('New State:', JSON.stringify(e));
         });

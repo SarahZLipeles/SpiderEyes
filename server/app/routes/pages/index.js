@@ -7,7 +7,7 @@ module.exports = router;
 
 
 router.get('/', function(req, res, next) {
-  Page.find({})
+  Page.find({pageRank: {$gte: 3}})
     .then(function(pages) {
       res.json(pages);
     })

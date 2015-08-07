@@ -19,5 +19,25 @@ app.service("PageService", function($http) {
       }
     }
     return data;
-  }
-})
+  };
+
+  this.getPages = function() {
+    return $http.get("/api/pages")
+    .then(function(pages) {
+      pages = pages.data;
+      console.log(pages);
+      var data = [{values: []}],
+      random = d3.random.normal();
+      for (var i = 0; i < pages.length; i++) {
+        data[0].values.push({
+          x: ((Math.random() - 0.5) / (pages[i].pageRank) * 4),
+          y: ((Math.random() - 0.5) / (pages[i].pageRank) * 4),
+          size: pages[i].pageRank,
+          shape: 'circle'
+        });
+      }
+      console.log(data);
+      return data;
+    });
+  };
+});
