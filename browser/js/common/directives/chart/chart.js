@@ -24,11 +24,14 @@ app.directive('scatterPlot', function() {
       });
       // create the chart
       var chart;
-      nv.addGraph(function() {
+      nv
+      .addGraph(function() {
         chart = nv.models.scatterChart()
           .showDistX(true)
           .showDistY(true)
           .useVoronoi(true)
+          .height(600)
+          .width(600)
           .color(d3.scale.category10().range())
           .duration(300);
         chart.dispatch.on('renderEnd', function() {
