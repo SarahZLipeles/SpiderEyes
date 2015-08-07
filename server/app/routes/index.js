@@ -3,6 +3,7 @@ var router = require('express').Router();
 module.exports = router;
 
 router.use('/members', require('./members'));
+router.use('/pages', require('./pages'));
 
 // Make sure this is after all of
 // the registered routes!
