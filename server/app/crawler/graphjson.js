@@ -32,45 +32,38 @@ var graphjson = {
   "multigraph": false
 };
 
-var nodes = [];
-
 var pagesQueue = new BBQ({
 	concurrency: 100
 });
 
 var pageToNode = function(page) {
 	var node = {
-		    "size": page.pageRank/ 10,
+		    "size": page.pageRank,
 		    "id": page.title,
 		    "URI": page.url,
-		    "_id": page._id
+		    "index": page._id
 		};
-	nodes.push(node);
-	return {
-		"source": nodes.indexOf(node),
-		"links": page.links
-	};
-};
-
-var findBy_Id = function(_id, source) {
-	for (var i = 0; i < nodes.length; i++) {
-		if (nodes[i]._id.toString() === _id.toString()) {
-			if (graphjson.nodes.indexOf(nodes[i]) === -1 && graphjson.nodes.indexOf(nodes[source]) === -1) {
-				graphjson.nodes.push(nodes[i]);
-				graphjson.nodes.push(nodes[source]);
-				return {source: graphjson.nodes.indexOf(nodes[i]), target: graphjson.nodes.indexOf(nodes[source])};
-			}
-		}
+	graphjson.nodes.push(node);
+	for (var i = 0; i < page.links.length; i++) {
+		graphjson.links.push({
+			source: page._id,
+			target: page.links[i]
+		});
 	}
 };
+
+// var findBy_Id = function(_id) {
+// 	for (var i = 0; i < graphjson.nodes.length; i++) {
+// 		if (graphjson.nodes[i]._id.toString() === _id.toString()) return i;
+// 	}
+// };
 
 var something = function() {
 	startDbPromise
 	.then(function() {
-		return Page.find({pageRank: {$gte: 3}});
+		return Page.find({pageRank: {$gte: 2}});
 	})
 	.then(function(pages) {
-		console.log(pages);
 		pages.map(function(page) {
 			pagesQueue.add(pageToNode.bind(null, page));
 		});
@@ -78,17 +71,6 @@ var something = function() {
 		return pagesQueue.start();
 	})
 	.then(function(linkSets) {
-		console.log("nodes done");
-		console.log("making links");
-		for (var i = 0; i < linkSets.length; i++) {
-			for (var j = 0; j < linkSets[i].links.length; j++) {
-				var cLinks = findBy_Id(linkSets[i].links[j], linkSets[i].source);
-				if (cLinks) {
-					graphjson.links.push(cLinks);
-				}
-			}
-		}
-		console.log("links done");
 		console.log(graphjson);
 		fs.writeFile("./graph.json", JSON.stringify(graphjson));
 	});
