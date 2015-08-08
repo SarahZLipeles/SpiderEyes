@@ -14,7 +14,7 @@ var robotstxt = "";
 
 var createPage = function(page, href) {
 	return Page.create({
-			url: page.url + href
+			url: starting_url + href
 		})
 		.then(function(childPage) {
 			return Page.findByIdAndUpdate(page._id, {
@@ -25,7 +25,7 @@ var createPage = function(page, href) {
 		})
 		.then(null, function(err) {
 			return Page.findOneAndUpdate({
-				url: page.url + href
+				url: starting_url + href
 			}, {
 				$inc: {
 					pageRank: 1
@@ -54,7 +54,7 @@ var getLinks = function(page, options) {
 				if (href) {
 					if (options.relative) {
 						if (href.match(/^\/[^/]/)) {
-							links.push(page.url + href);
+							links.push(starting_url + href);
 							pageQueue.add(createPage.bind(null, page, href));
 						}
 					}

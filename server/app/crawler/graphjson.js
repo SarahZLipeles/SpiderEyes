@@ -41,22 +41,20 @@ var pageToNode = function(page) {
 		    "size": page.pageRank,
 		    "id": page.title,
 		    "URI": page.url,
-		    "index": page._id
+		    "_id": page._id
 		};
 	graphjson.nodes.push(node);
-	for (var i = 0; i < page.links.length; i++) {
-		graphjson.links.push({
-			source: page._id,
-			target: page.links[i]
-		});
-	}
+	return {
+		"source": graphjson.nodes.indexOf(node),
+		"links": page.links
+	};
 };
 
-// var findBy_Id = function(_id) {
-// 	for (var i = 0; i < graphjson.nodes.length; i++) {
-// 		if (graphjson.nodes[i]._id.toString() === _id.toString()) return i;
-// 	}
-// };
+var findBy_Id = function(_id) {
+	for (var i = 0; i < graphjson.nodes.length; i++) {
+		if (graphjson.nodes[i]._id.toString() === _id.toString()) return i;
+	}
+};
 
 var something = function() {
 	startDbPromise
@@ -71,6 +69,20 @@ var something = function() {
 		return pagesQueue.start();
 	})
 	.then(function(linkSets) {
+		console.log("nodes done");
+		console.log("making links");
+		for (var i = 0; i < linkSets.length; i++) {
+			for (var j = 0; j < linkSets[i].links.length; j++) {
+				var cLinks = findBy_Id(linkSets[i].links[j]);
+				if (cLinks) {
+					graphjson.links.push({
+						"source": linkSets[i].source,
+						"target": cLinks
+					});
+				}
+			}
+		}
+		console.log("links done");
 		console.log(graphjson);
 		fs.writeFile("./graph.json", JSON.stringify(graphjson));
 	});
