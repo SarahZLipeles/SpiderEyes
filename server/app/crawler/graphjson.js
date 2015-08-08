@@ -32,36 +32,45 @@ var graphjson = {
   "multigraph": false
 };
 
+var nodes = [];
+
 var pagesQueue = new BBQ({
 	concurrency: 100
 });
 
 var pageToNode = function(page) {
 	var node = {
-		    "size": page.pageRank,
+		    "size": page.pageRank/ 10,
 		    "id": page.title,
 		    "URI": page.url,
 		    "_id": page._id
 		};
-	graphjson.nodes.push(node);
+	nodes.push(node);
 	return {
-		"source": graphjson.nodes.indexOf(node),
+		"source": nodes.indexOf(node),
 		"links": page.links
 	};
 };
 
-var findBy_Id = function(_id) {
-	for (var i = 0; i < graphjson.nodes.length; i++) {
-		if (graphjson.nodes[i]._id.toString() === _id.toString()) return i;
+var findBy_Id = function(_id, source) {
+	for (var i = 0; i < nodes.length; i++) {
+		if (nodes[i]._id.toString() === _id.toString()) {
+			if (graphjson.nodes.indexOf(nodes[i]) === -1 && graphjson.nodes.indexOf(nodes[source]) === -1) {
+				graphjson.nodes.push(nodes[i]);
+				graphjson.nodes.push(nodes[source]);
+				return {source: graphjson.nodes.indexOf(nodes[i]), target: graphjson.nodes.indexOf(nodes[source])};
+			}
+		}
 	}
 };
 
 var something = function() {
 	startDbPromise
 	.then(function() {
-		return Page.find({pageRank: {$gte: 2}});
+		return Page.find({pageRank: {$gte: 3}});
 	})
 	.then(function(pages) {
+		console.log(pages);
 		pages.map(function(page) {
 			pagesQueue.add(pageToNode.bind(null, page));
 		});
@@ -73,12 +82,9 @@ var something = function() {
 		console.log("making links");
 		for (var i = 0; i < linkSets.length; i++) {
 			for (var j = 0; j < linkSets[i].links.length; j++) {
-				var cLinks = findBy_Id(linkSets[i].links[j]);
+				var cLinks = findBy_Id(linkSets[i].links[j], linkSets[i].source);
 				if (cLinks) {
-					graphjson.links.push({
-						"source": linkSets[i].source,
-						"target": cLinks
-					});
+					graphjson.links.push(cLinks);
 				}
 			}
 		}

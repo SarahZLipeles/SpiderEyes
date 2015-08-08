@@ -209,18 +209,18 @@ app.directive('forceLayout', function(PageService) {
             var width = 960,
                 height = 500;
 
-            var color = d3.scale.category20();
+            // var color = d3.scale.category20();
 
             var force = d3.layout.force()
-                .charge(-120)
+                .charge(-1)
                 .linkDistance(30)
                 .size([width, height]);
 
-            var svg = d3.select("body").append("svg")
+            var svg = d3.select(".graph").append("svg")
                 .attr("width", width)
                 .attr("height", height);
 
-            d3.json("miserables.json", function(error, graph) {
+            d3.json("graph.json", function(error, graph) {
                 if (error) throw error;
 
                 force
@@ -232,17 +232,36 @@ app.directive('forceLayout', function(PageService) {
                     .data(graph.links)
                     .enter().append("line")
                     .attr("class", "link")
-                    .style("stroke-width", function(d) {
-                        return Math.sqrt(d.value);
+                    .attr("stroke-opacity", function(d) {
+                        if (d.label == 'is a') {
+                            return '0.8';
+                        } else {
+                            return '0.2';
+                        }
+                    })
+                    .style("stroke-width", 6)
+                    .style("stroke", function(d) {
+                        if (d.color !== null) {
+                            return d.color;
+                        }
                     });
 
                 var node = svg.selectAll(".node")
                     .data(graph.nodes)
                     .enter().append("circle")
                     .attr("class", "node")
-                    .attr("r", 5)
+                    .attr("r", function(d) {
+                        if (d.size > 0) {
+                            return 10 + (d.size * 2);
+                        } else {
+                            return 10;
+                        }
+                    })
                     .style("fill", function(d) {
-                        return color(d.group);
+                        // return color(d.group);
+                        if (d.style == 'filled') {
+                            return d.color;
+                        }
                     })
                     .call(force.drag);
 
