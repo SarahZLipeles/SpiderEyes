@@ -45,7 +45,8 @@ app.directive('forceLayout', function(PageService) {
                 force
                     .nodes(json.nodes)
                     .links(json.links)
-                    .start();
+
+                .start();
 
                 var link = svg.selectAll(".link")
                     .data(json.links)
@@ -89,7 +90,6 @@ app.directive('forceLayout', function(PageService) {
                     .text(function(d) {
                         return d.label;
                     });
-
 
                 var drag = force.drag()
                     .origin(function(d) {
@@ -205,8 +205,6 @@ app.directive('forceLayout', function(PageService) {
                         return d.URI;
                     });
 
-
-
                 var linkedByIndex = {};
                 json.links.forEach(function(d) {
                     console.log(d.source.index)
@@ -258,7 +256,6 @@ app.directive('forceLayout', function(PageService) {
                         });
                     };
                 }
-
 
                 force.on("tick", function() {
                     link.attr("x1", function(d) {
