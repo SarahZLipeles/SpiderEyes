@@ -24,10 +24,10 @@ app.directive('forceLayout', function(PageService) {
                 jsonfile = $scope.jsonfile || "graph.json";
 
             var force = d3.layout.force()
-                // .gravity(.05)
+                .gravity(0.05)
                 .charge(-200)
                 .linkDistance(60)
-                .size([width, height])
+                .size([width, height]);
 
             var svg = d3.select(".graph")
                 .append("svg")

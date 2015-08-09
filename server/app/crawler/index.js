@@ -13,9 +13,10 @@ Promise.promisifyAll(fs);
 
 var robotstxt = "";
 
-var createPage = function(page, href) {
+var createPage = function(page, href, title) {
 	return Page.create({
-			url: starting_url + href
+			url: page.url + href,
+			title: title
 		})
 		.then(function(childPage) {
 			return Page.findByIdAndUpdate(page._id, {
@@ -26,7 +27,7 @@ var createPage = function(page, href) {
 		})
 		.then(null, function(err) {
 			return Page.findOneAndUpdate({
-				url: starting_url + href
+				url: page.url + href
 			}, {
 				$inc: {
 					pageRank: 1
@@ -47,6 +48,7 @@ var getLinks = function(page, options) {
 	return requestAsync(page.url)
 		.then(function(res) {
 			if (!res) return;
+			var $h = cheerio.load(res[0].head);
 			var $ = cheerio.load(res[0].body);
 			var links = [];
 			var anchorTags = $("a");
@@ -55,8 +57,10 @@ var getLinks = function(page, options) {
 				if (href) {
 					if (options.relative) {
 						if (href.match(/^\/[^/]/)) {
-							links.push(starting_url + href);
-							pageQueue.add(createPage.bind(null, page, href));
+							links.push(page.url + href);
+							var title = $h("title").text();
+							console.log(title);
+							pageQueue.add(createPage.bind(null, page, href, title));
 						}
 					}
 				}
@@ -90,7 +94,7 @@ var iterate = function(page) {
 		});
 };
 
-module.exports = function() {
+module.exports = function(url) {
 	return Page.remove().then(function() {
 			return fs.readFileAsync("./robots.txt");
 		})
@@ -100,7 +104,7 @@ module.exports = function() {
 				return disallow.slice(10);
 			});
 			return Page.create({
-				url: starting_url
+				url: url
 			});
 		}).then(function(page) {
 
@@ -134,6 +138,8 @@ module.exports = function() {
 // 		.then(null, function(err) {
 // 			console.log(err);
 // 		});
+// 	};
+// };
 
 // 	Page.find({pageRank: {$gte: 2}, title: {$exists: false}})
 // 	.then(function(pages) {
