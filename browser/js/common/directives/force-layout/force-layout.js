@@ -19,6 +19,7 @@ app.directive('forceLayout', function(PageService) {
         // transclude: true,
         // compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
         link: function($scope, elm, attrs) {
+
             var width = $scope.width || 1200,
                 height = $scope.height || 800,
                 jsonfile = $scope.jsonfile || "graph.json";

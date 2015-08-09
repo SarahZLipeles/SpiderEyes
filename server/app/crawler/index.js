@@ -1,66 +1,90 @@
 var cheerio = require('cheerio');
 var Promise = require('bluebird');
 var request = require('request');
-var async = require("async");
 var requestAsync = Promise.promisify(request);
+var SSPPQ = require("./SelfSortPriorityQueue");
 var BBQ = require("bluebird-queue");
 var fs = require("fs");
 var mongoose = require('mongoose');
 var Page = mongoose.model('Page');
 Promise.promisifyAll(request);
 Promise.promisifyAll(fs);
+var events = require("events");
 
+var crawlEmitter = require("../../io/eventEmitter.js");
 
+var io;
 var robotstxt = "";
 
-var createPage = function(page, href, title) {
+var stop = false;
+
+var createPage = function(page, href) {
+	if (stop) return;
+	var childPage;
+	console.log(href);
 	return Page.create({
-			url: page.url + href,
-			title: title
+			url: starting_url + href
 		})
-		.then(function(childPage) {
+		.then(function(cP) {
+			childPage = cP;
 			return Page.findByIdAndUpdate(page._id, {
 				$addToSet: {
 					links: childPage._id
+				},
+				$set: {
+					title: page.title
 				}
 			});
+
+		})
+		.then(function() {
+			crawlEmitter.emit("newNode", childPage);
+			crawlEmitter.emit("link", {source: page._id, target: childPage._id});
 		})
 		.then(null, function(err) {
+			// linksQueue.queue.update(page._id, 1);
 			return Page.findOneAndUpdate({
-				url: page.url + href
+				url: starting_url + href
 			}, {
 				$inc: {
 					pageRank: 1
 				}
-			});
+			}).exec();
+		})
+		.then(function(updatedPage) {
+			if(updatedPage) {
+				crawlEmitter.emit("grow", {node: updatedPage._id});
+			}
 		});
 };
 
 var getLinks = function(page, options) {
+	if (stop) return;
 	for (var i = 0; i < robotstxt.length; i++) {
 		if (page.url.indexOf(robotstxt[i]) !== -1) {
 			return;
 		}
 	}
 	var pageQueue = new BBQ({
-		concurrency: 10
+		concurrency: 100
 	});
 	return requestAsync(page.url)
 		.then(function(res) {
 			if (!res) return;
-			var $h = cheerio.load(res[0].head);
 			var $ = cheerio.load(res[0].body);
 			var links = [];
 			var anchorTags = $("a");
+			var title = $("head title").text();
+			title = title.slice(0, title.length - 35);
+			console.log(title);
+			page.title = title;
 			anchorTags.each(function() {
 				var href = $(this).attr('href');
 				if (href) {
 					if (options.relative) {
-						if (href.match(/^\/[^/]/)) {
-							links.push(page.url + href);
-							var title = $h("title").text();
-							console.log(title);
-							pageQueue.add(createPage.bind(null, page, href, title));
+						if (href.match(/^\/[^/]/) && !href.match(/[:?#]/)) {
+							links.push(starting_url + href);
+							pageQueue.add(createPage.bind(null, page, href));
 						}
 					}
 				}
@@ -75,18 +99,17 @@ var getLinks = function(page, options) {
 var starting_url = "https://en.wikipedia.org";
 
 var linksQueue = new BBQ({
-	concurrency: 1,
-	delay: 15000
+	concurrency: 4
 });
 
 var iterate = function(page) {
+	if (stop) return;
 	return getLinks(page, {
 			relative: true
 		})
 		.then(function(oldPage) {
-			console.log(oldPage.links);
 			oldPage.links.forEach(function(link) {
-				linksQueue.add(iterate(link));
+				linksQueue.add(iterate.bind(null, link));
 			});
 		})
 		.then(null, function(err) {
@@ -94,33 +117,43 @@ var iterate = function(page) {
 		});
 };
 
-module.exports = function(url) {
-	return Page.remove().then(function() {
-			return fs.readFileAsync("./robots.txt");
-		})
-		.then(function(data) {
-			robotstxt = data.toString().match(/Disallow:\s.*/g);
-			robotstxt = robotstxt.map(function(disallow) {
-				return disallow.slice(10);
-			});
-			return Page.create({
-				url: url
-			});
-		}).then(function(page) {
+module.exports = {
+	crawl: function(url) {
+		io = require('../../io')();
+		return Page.remove().then(function() {
+				return fs.readFileAsync("./robots.txt");
+			})
+			.then(function(data) {
+				robotstxt = data.toString().match(/Disallow:\s.*/g);
+				robotstxt = robotstxt.map(function(disallow) {
+					return disallow.slice(10);
+				});
+				return Page.create({
+					url: url
+				});
+			}).then(function(page) {
 
-			return iterate(page);
-		})
-		.then(function() {
-			linksQueue.start();
-		})
-		.then(function() {
-			console.log("this ended?!?!");
-		});
+				return iterate(page);
+			})
+			.then(function() {
+				linksQueue.start();
+			})
+			.then(function() {
+				console.log("this ended?!?!");
+			});
+	},
+	stop: function() {
+		stop = true;
+		setTimeout(function() {
+			stop = false;
+		}, 30000);
+		return new Promise(function(resolve, reject){resolve(); });
+	}
 };
 
 
 // module.exports = function() {
-// 	var pagesQueue = new BBQ({
+// 	var pagesQueue = new SSPPQ({
 // 		concurrency: 100
 // 	});
 
@@ -139,7 +172,6 @@ module.exports = function(url) {
 // 			console.log(err);
 // 		});
 // 	};
-// };
 
 // 	Page.find({pageRank: {$gte: 2}, title: {$exists: false}})
 // 	.then(function(pages) {
