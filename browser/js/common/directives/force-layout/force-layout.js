@@ -4,7 +4,12 @@ app.directive('forceLayout', function(PageService) {
         // name: '',
         // priority: 1,
         // terminal: true,
-        scope: {}, // {} = isolate, true = child, false/undefined = no change
+        scope: {
+            jsonfile: '@',
+            width: '=',
+            height: '=',
+            searchTerm: '='
+        }, // {} = isolate, true = child, false/undefined = no change
         // controller: function($scope, $element, $attrs, $transclude) {},
         // require: 'ngModel', // Array = multiple requires, ? = optional, ^ = check parent elements
         restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
@@ -14,8 +19,15 @@ app.directive('forceLayout', function(PageService) {
         // transclude: true,
         // compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
         link: function($scope, elm, attrs) {
-            var width = 1200,
-                height = 1200;
+            var width = $scope.width || 1200,
+                height = $scope.height || 800,
+                jsonfile = $scope.jsonfile || "graph.json";
+
+            var force = d3.layout.force()
+                // .gravity(.05)
+                .charge(-200)
+                .linkDistance(60)
+                .size([width, height])
 
             var svg = d3.select(".graph")
                 .append("svg")
@@ -27,20 +39,16 @@ app.directive('forceLayout', function(PageService) {
                 }))
                 .append('g');
 
-            d3.json("graph.json", function(error, graph) {
+            d3.json(jsonfile, function(error, json) {
                 if (error) throw error;
 
-                var force = d3.layout.force()
-                    .gravity(.05)
-                    .charge(-200)
-                    .linkDistance(60)
-                    .size([width, height])
-                    .nodes(graph.nodes)
-                    .links(graph.links)
+                force
+                    .nodes(json.nodes)
+                    .links(json.links)
                     .start();
 
                 var link = svg.selectAll(".link")
-                    .data(graph.links)
+                    .data(json.links)
                     .enter().append("line")
                     .attr("class", "link")
                     .attr("stroke-opacity", function(d) {
@@ -57,7 +65,9 @@ app.directive('forceLayout', function(PageService) {
                         }
                     })
                     .on("mouseover", function() {
-                        d3.select(this).style("stroke", "#999999").attr("stroke-opacity", "1.0");
+                        d3.select(this)
+                            .style("stroke", "#999999")
+                            .attr("stroke-opacity", "1.0");
                     })
                     .on("mouseout", function() {
                         d3.select(this)
@@ -95,74 +105,160 @@ app.directive('forceLayout', function(PageService) {
                     })
 
                 var node = svg.selectAll(".node")
-                    .data(graph.nodes)
+                    .data(json.nodes)
                     .enter().append("g")
                     .attr("class", "node")
                     .call(drag);
 
                 node.append("circle")
                     .attr("r", function(d) {
-                        if (d.size > 0) {
-                            return 10 + (d.size * 2);
-                        } else {
-                            return 10;
-                        }
-                    })
-                    .style("fill", function(d) {
-                        // return color(d.group);
-                        if (d.style == 'filled') {
-                            return d.color;
-                        }
+                        return Math.sqrt(d.size * 10) * 5;
                     })
                     .style("stroke", function(d) {
-                        if (d.style !== 'filled') {
-                            return d.color;
+                        if (d.size > 10) {
+                            return "#b94431"
+                        } else if (d.size > 1.5) {
+                            return "#da991c"
+                        } else if (d.size > 0.3) {
+                            return "#ffffff"
+                        } else {
+                            return "#5b5b5b"
                         }
                     })
                     .style("stroke-width", "4")
-                    .on("mouseover", function() {
-                        d3.select(this).style("fill", "#999");
-                    })
-                    .on("mouseout", function(d) {
-                        if (d.style == 'filled') {
-                            d3.select(this).style("fill", d.color);
-                        } else {
-                            d3.select(this).style("stroke", d.color);
-                            d3.select(this).style("fill", "black");
-                        }
-                    })
+                    .on("mouseover", fade(0.3))
+                    //function() {
+                    // d3.select(this).style("fill", "#999");
+                    //})
+                    .on("mouseout", fade(1))
+                    //     function(d) {
+                    //     d3.select(this)
+                    //         .style("stroke", function(d) {
+                    //             if (d.size > 10) {
+                    //                 return "#b94431"
+                    //             } else if (d.size > 1.5) {
+                    //                 return "#da991c"
+                    //             } else if (d.size > 0.3) {
+                    //                 return "#ffffff"
+                    //             } else {
+                    //                 return "#333333"
+                    //             }
+                    //         });
+                    //     d3.select(this).style("fill", "black");
+                    // })
+                    // .on("click", function() {
+
+                // })
 
                 node.append("text")
+                    .attr("class", "text")
                     .attr("text-anchor", "middle")
-                    // .style("color", "white", null)
-                    // .attr("fill", "white")
-                    .style("pointer-events", "none")
-                    // .attr("font-size", function(d) {
-                    //     if (d.color == '#b94431') {
-                    //         return 10 + (d.size * 2) + 'px';
-                    //     } else {
-                    //         return "9px";
-                    //     }
-                    // })
-                    // .attr("font-weight", function(d) {
-                    //     if (d.color == '#b94431') {
-                    //         return "bold";
-                    //     } else {
-                    //         return "100";
-                    //     }
-                    // })
-                    .text(function(d) {
+                    .attr("fill", "white")
+                    .attr("stroke-width", "0")
+                    // .style("pointer-events", "none")
+                    .attr("font-size", function(d) {
                         if (d.color == '#b94431') {
-                            return d.id + ' (' + d.size + ')';
+                            return 10 + (d.size * 2) + 'px';
                         } else {
-                            return d.id;
+                            return "9px";
                         }
-                    });
+                    })
+                    .attr("font-weight", function(d) {
+                        if (d.color == '#b94431') {
+                            return "bold";
+                        } else {
+                            return "100";
+                        }
+                    })
+                    .text(function(d) {
+                        return d.id.substring(0, 20) + "...";
+                    })
+                    .on("mouseover", textFade(0.3))
+                    //     function() {
+                    //     d3.select(this)
+                    //         .attr("font-size", function(d) {
+                    //             return "14px"
+                    //         })
+                    //         .text(function(d) {
+                    //             return d.id
+                    //         })
+                    // })
+                    .on("mouseout", textFade(1))
+                    //  function(d) {
+                    //     d3.select(this)
+                    //         .attr("font-size", function(d) {
+                    //             return "9px"
+                    //         })
+                    //         .text(function(d) {
+                    //             return d.id.substring(0, 20) + "...";
+                    //         })
+                    // })
+
+                // .on("click", function() {
+                //     d3.select(this).text(function(d) {
+                //         return d.id
+                //     })
+                // });
 
                 node.append("title")
                     .text(function(d) {
                         return d.URI;
                     });
+
+
+
+                var linkedByIndex = {};
+                json.links.forEach(function(d) {
+                    console.log(d.source.index)
+                    linkedByIndex[d.source.index + "," + d.target.index] = 1;
+                });
+
+                function isConnected(a, b) {
+                    console.log("here")
+                    return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+                }
+
+                function fade(opacity) {
+                    return function(d) {
+                        node.style("stroke-opacity", function(o) {
+                            var thisOpacity = isConnected(d, o) ? 1 : opacity;
+                            this.setAttribute('fill-opacity', thisOpacity);
+                            return thisOpacity;
+                        });
+
+                        link.style("stroke-opacity", function(o) {
+                            return o.source === d || o.target === d ? 1 : opacity;
+                        });
+                    };
+                }
+
+                function textFade(opacity) {
+                    return function(d) {
+                        node.style("stroke-opacity", function(o) {
+                            var thisOpacity = isConnected(d, o) ? 1 : opacity;
+                            this.setAttribute('fill-opacity', thisOpacity);
+                            if (opacity < 1 && isConnected(d, o)) {
+                                d3.select(this).select("text")
+                                    .attr("font-size", "14px")
+                                    .text(function(d) {
+                                        return d.id
+                                    });
+                            } else {
+                                d3.select(this).select("text")
+                                    .attr("font-size", "9px")
+                                    .text(function(d) {
+                                        return d.id.substring(0, 20) + "...";
+                                    })
+                            }
+                            return thisOpacity;
+                        });
+
+                        link.style("stroke-opacity", function(o) {
+                            return o.source === d || o.target === d ? 1 : opacity;
+                        });
+                    };
+                }
+
 
                 force.on("tick", function() {
                     link.attr("x1", function(d) {

@@ -1,4 +1,11 @@
-<div>
+<div class="container">
   <!-- <scatter-plot></scatter-plot> -->
+  <div class="input-group">
+    <input type="text" class="form-control" placeholder="Start crawling from ..." ng-model="startingUrl" />
+    <span class="input-group-btn">
+      <button ng-show="!isCrawling" class="btn btn-danger" type="button" ng-click="crawl(startingUrl)">Unleash the spider!</button>
+      <button ng-show="isCrawling" class="btn btn-success" type="button" ng-click="stop()">Stop!</button>
+    </span>
+  </div>
   <force-layout></force-layout>
 </div>
