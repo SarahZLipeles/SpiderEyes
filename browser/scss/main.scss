@@ -3,7 +3,10 @@
 }
 
 body {
-  background: #fdfdfd;
+  background: black;
+  height: 100%;
+  font-family: helvetica, arial;
+  text-shadow: 0px 1px 1px black;
 }
 
 @mixin clearfix {
@@ -20,8 +23,8 @@ body {
   margin: 0 auto;
 }
 
-@import 'directives/main';
-@import 'home/main';
-@import 'about/main';
-@import 'tutorial/main';
-@import 'login/main';
+@import "directives/main";
+@import "home/main";
+@import "about/main";
+@import "tutorial/main";
+@import "login/main";

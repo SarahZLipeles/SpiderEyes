@@ -14,7 +14,7 @@ var robotstxt = "";
 
 var createPage = function(page, href) {
 	return Page.create({
-			url: page.url + href
+			url: starting_url + href
 		})
 		.then(function(childPage) {
 			return Page.findByIdAndUpdate(page._id, {
@@ -25,13 +25,13 @@ var createPage = function(page, href) {
 		})
 		.then(null, function(err) {
 			return Page.findOneAndUpdate({
-				url: page.url + href
+				url: starting_url + href
 			}, {
 				$inc: {
 					pageRank: 1
 				}
 			});
-		})
+		});
 };
 
 var getLinks = function(page, options) {
@@ -54,7 +54,7 @@ var getLinks = function(page, options) {
 				if (href) {
 					if (options.relative) {
 						if (href.match(/^\/[^/]/)) {
-							links.push(page.url + href);
+							links.push(starting_url + href);
 							pageQueue.add(createPage.bind(null, page, href));
 						}
 					}
@@ -112,3 +112,67 @@ module.exports = function() {
 			console.log("this ended?!?!");
 		});
 };
+
+
+// module.exports = function() {
+// 	var pagesQueue = new BBQ({
+// 		concurrency: 100
+// 	});
+
+// 	var getTitle = function(page) {
+// 		return requestAsync(page.url)
+// 		.then(function(res) {
+// 			if (!res[0]) return console.log("no res");
+// 			var $ = cheerio.load(res[0].body);
+// 			var title = $("title").text();
+// 			if (!title) return console.log("no title");
+// 			page.title = title.slice(0, title.length - 35);
+// 			console.log(page.title);
+// 			return page.save();
+// 		})
+// 		.then(null, function(err) {
+// 			console.log(err);
+// 		});
+// 	};
+
+// 	Page.find({pageRank: {$gte: 2}, title: {$exists: false}})
+// 	.then(function(pages) {
+// 		pages.map(function(page) {
+// 			pagesQueue.add(getTitle.bind(null, page));
+// 		});
+// 		return pagesQueue.start();
+// 	})
+// 	.then(function() {
+// 		console.log("done");
+// 	})
+// 	.then(null, function(err) {
+// 		console.log(err);
+// 	});
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
