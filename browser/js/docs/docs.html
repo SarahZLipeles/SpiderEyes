@@ -1,24 +1,6 @@
 <div class="container">
-  <h1>en.wikipedia.com</h1>
-  <div class="row">
-    <div class="col-md-5">
-      <div class="input-group">
-        <span class="input-group-addon">Start node</span>
-        <input type="text" class="form-control" placeholder="" />
-      </div>
-    </div>
-    <div class="col-md-5">
-      <div class="input-group">
-        <span class="input-group-addon">Finish node</span>
-        <input type="text" class="form-control" placeholder="" />
-      </div>
-    </div>
-    <div class="col-md-2">
-      <button class="btn btn-warning">
-        <span class="glyphicon glyphicon-search"></span>
-        Search
-      </button>
-    </div>
-  </div>
-  <force-layout jsonfile="graph1.json"></force-layout>
+  <h2>Started from: en.wikipedia.com/wiki/jesus</h2>
+</div>
+<div class="graph-container">
+  <force-layout jsonfile="graph.json" showsearch="true"></force-layout>
 </div>
