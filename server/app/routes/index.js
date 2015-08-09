@@ -1,6 +1,6 @@
 'use strict';
-var crawler = require('../crawler')
 var router = require('express').Router();
+var crawler = require('../crawler');
 module.exports = router;
 
 router.use('/members', require('./members'));

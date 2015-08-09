@@ -7,7 +7,7 @@ var startDb = require('./db');
 
 // Create a node server instance! cOoL!
 var server = require('http').createServer();
-var test = require('./app/crawler/index.js');
+// var test = require('./app/crawler/index.js');
 
 var createApplication = function() {
     var app = require('./app');
@@ -21,7 +21,7 @@ var startServer = function() {
 
     server.listen(PORT, function() {
         console.log(chalk.blue('Server started on port', chalk.magenta(PORT)));
-        test("https://en.wikipedia.org/wiki/Truth");
+        // test("https://en.wikipedia.org/wiki/Truth");
     });
 
 };
