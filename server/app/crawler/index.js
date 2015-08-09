@@ -1,6 +1,7 @@
 var cheerio = require('cheerio');
 var Promise = require('bluebird');
 var request = require('request');
+var async = require("async");
 var requestAsync = Promise.promisify(request);
 var BBQ = require("bluebird-queue");
 var fs = require("fs");
@@ -133,7 +134,6 @@ module.exports = function() {
 // 		.then(null, function(err) {
 // 			console.log(err);
 // 		});
-// 	};
 
 // 	Page.find({pageRank: {$gte: 2}, title: {$exists: false}})
 // 	.then(function(pages) {
