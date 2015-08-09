@@ -15,9 +15,12 @@ app.directive('forceLayout', function(PageService) {
                 // console.log("end", selectedEndVal === "")
                 var node = $scope.svg.selectAll(".node");
                 var selectedNode = node.filter(function(d) {
+                    // if (d.id === selectedVal) {
+                    //     console.log(d)
+                    // }
                     return d.id === selectedVal;
                 });
-                // console.log(selectedNode[0])
+                // console.log(selectedNode)
 
                 // var path = []
                 // path.push(selectedNode[0])
