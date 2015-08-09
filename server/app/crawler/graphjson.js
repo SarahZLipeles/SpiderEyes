@@ -59,7 +59,7 @@ var findBy_Id = function(_id) {
 var something = function() {
 	startDbPromise
 	.then(function() {
-		return Page.find({pageRank: {$gte: 2}});
+		return Page.find({});
 	})
 	.then(function(pages) {
 		pages.map(function(page) {

@@ -31,7 +31,7 @@ app.directive('forceLayout', function(PageService) {
                 if (error) throw error;
 
                 var force = d3.layout.force()
-                    .gravity(.05)
+                    .gravity(0.08)
                     .charge(-200)
                     .linkDistance(60)
                     .size([width, height])
