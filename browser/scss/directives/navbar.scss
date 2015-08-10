@@ -17,20 +17,31 @@ navbar {
     color: white;
     font-size: 16px;
   }
-  .nav > li > a {
+  .nav > li a {
+    text-decoration: none;
     cursor: pointer;
     transition: color 0.2s;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    position: relative;
+    display: block;
+    padding: 10px 15px;
     &.active {
       color: darken(orange, 10%);
       font-weight: bold;
     }
     &:hover {
       background: none;
+      background-color: transparent;
       color: orange;
     }
     &:focus {
       background: none;
     }
+  }
+  .nav .open > a, .nav .open > a:hover, .nav .open > a:focus {
+    background-color: transparent;
+    border-color: none;
   }
   .login-button {
     float: right;

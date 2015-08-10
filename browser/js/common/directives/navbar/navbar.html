@@ -5,7 +5,16 @@
         </div>
         <ul class="nav navbar-nav">
             <li ng-repeat="item in items" ng-show="!item.auth || isLoggedIn()">
-                <a ui-sref-active="active" ui-sref="{{ item.state }}">{{ item.label }}</a>
+                <a ng-if="item.label!='Case Studies'" ui-sref-active="active" ui-sref="{{ item.state }}">{{ item.label }}</a>
+                <div class="dropdown" ng-if="item.label=='Case Studies'">
+                    <a class="dropdown-toggle" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    {{ item.label }}
+                    <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        <li ng-repeat="child in item.children"><a ui-sref="{{item.state}}({case:child.url})">{{ child.label }}</a></li>
+                    </ul>
+                </div>
             </li>
         </ul>
         <!-- <button ng-show="!user" ui-sref="login" class="btn login-button">Login</button> -->

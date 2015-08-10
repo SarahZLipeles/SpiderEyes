@@ -1,23 +1,35 @@
 <div class="container">
   <div class="row ui-widget" ng-show="showsearch">
-    <div class="col-md-5">
-      <div class="input-group">
-        <span class="input-group-addon">Start node</span>
+    <div class="col-md-10">
+      <!-- <div class="input-group"> -->
+        <!-- <span class="input-group-addon">Start node</span> -->
         <input id="search" type="text" class="form-control" placeholder="" />
       </div>
-    </div>
-    <div class="col-md-5">
+      <div class="col-md-2">
+        <!-- <span class="input-group-btn"> -->
+          <button class="btn btn-warning" ng-click="searchNode()">
+            <span class="glyphicon glyphicon-search"></span>
+            Search
+          </button>
+        <!-- </span> -->
+      </div>
+  </div>
+    <!-- </div> -->
+    <!-- <div class="col-md-5">
       <div class="input-group">
-        <span class="input-group-addon">Finish node</span>
+        <span class="input-group-addon">End node</span>
         <input id="searchEnd" type="text" class="form-control" placeholder="" />
       </div>
-    </div>
-    <div class="col-md-2">
+    </div> -->
+    <!-- <div class="col-md-2">
       <button class="btn btn-warning" ng-click="searchNode()">
         <span class="glyphicon glyphicon-search"></span>
         Search
       </button>
-    </div>
+    </div> -->
+  <!-- </div> -->
+  <div ng-show="showupdate">
+    <h2 id="latest"></h2>
   </div>
 </div>
 <div class="graph">

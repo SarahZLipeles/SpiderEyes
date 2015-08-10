@@ -12,8 +12,6 @@ app.controller('AboutController', function($scope, AboutFactory) {
   // make sure your path is valid given any size because size scales if the chart scales.
   $scope.isCrawling = false;
 
-  
-
   $scope.crawl = function(startingUrl) {
     $scope.isCrawling = true;
     console.log("hi");

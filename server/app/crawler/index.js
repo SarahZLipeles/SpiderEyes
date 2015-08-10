@@ -172,10 +172,22 @@ module.exports = {
 		}, 5000);
 		// linksQueue.drain();
 
-		createPage = function() {return new Promise(function(resolve, reject) {resolve();});};
+		createPage = function() {
+			return new Promise(function(resolve, reject) {
+				resolve();
+			});
+		};
 
-		getLinks = function() {return new Promise(function(resolve, reject) {resolve();});};
-		iterate = function(){return new Promise(function(resolve, reject) {resolve();});};
+		getLinks = function() {
+			return new Promise(function(resolve, reject) {
+				resolve();
+			});
+		};
+		iterate = function() {
+			return new Promise(function(resolve, reject) {
+				resolve();
+			});
+		};
 		linksQueue = null;
 		return new Promise(function(resolve, reject) {
 			resolve();
