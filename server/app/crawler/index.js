@@ -118,23 +118,24 @@ var linksQueue = new BBQ({
 	delay: 500
 });
 
-var iterate = function(page) {
-	if (stop) return;
-	return getLinks(page, {
-			relative: true
-		})
-		.then(function(oldPage) {
-			oldPage.links.forEach(function(link) {
-				linksQueue.add(iterate.bind(null, link));
-			});
-		})
-		.then(null, function(err) {
-			console.log("error", err);
-		});
-};
+var iterate;
 
 module.exports = {
 	crawl: function(url) {
+		iterate = function(page) {
+			if (stop) return;
+			return getLinks(page, {
+					relative: true
+				})
+				.then(function(oldPage) {
+					oldPage.links.forEach(function(link) {
+						linksQueue.add(iterate.bind(null, link));
+					});
+				})
+				.then(null, function(err) {
+					console.log("error", err);
+				});
+		};
 		io = require('../../io')();
 		return Page.remove().then(function() {
 				return fs.readFileAsync("./robots.txt");
@@ -159,11 +160,12 @@ module.exports = {
 			});
 	},
 	stop: function() {
-		stop = true;
-		setTimeout(function() {
-			stop = false;
-		}, 5000);
-		linksQueue.drain();
+		// stop = true;
+		// setTimeout(function() {
+		// 	stop = false;
+		// }, 5000);
+		// linksQueue.drain();
+		iterate = function(){};
 		return new Promise(function(resolve, reject) {
 			resolve();
 		});

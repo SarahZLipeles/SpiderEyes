@@ -16,16 +16,17 @@ app.directive('forceLayout', function(PageService) {
             $scope.update = function() {
 
                 var link = $scope.svg.selectAll(".link")
-                    .data($scope.links, function(d) {
-                        return d.source.id + "-" + d.target.id;
-                    });
+                    .data($scope.links);
+                    // .data($scope.links, function(d) {
+                    //     return d.source.id + "-" + d.target.id;
+                    // });
 
                 link.enter().append("line")
                     .attr("class", "link")
                     .attr("stroke-opacity", 0.2)
                     .style("stroke-width", 6);
 
-                link.exit().remove();
+                // link.exit().remove();
 
                 var drag = $scope.force.drag()
                     .origin(function(d) {
