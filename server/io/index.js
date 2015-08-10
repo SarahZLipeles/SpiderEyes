@@ -12,12 +12,13 @@ module.exports = function (server) {
     io.on('connection', function (socket) {
     	console.log("hello");
         crawlEmitter.on('newNode', function(data) {
-        	console.log("KSFLJGHLKSDJHG");
         	socket.emit('newNode', data);
         });
         crawlEmitter.on('link', function(data) {
-        	console.log("SKJDFGHLKSJDHFGLKJSDFHL");
         	socket.emit('link', data);
+        });
+        crawlEmitter.on('grow', function(data) {
+            socket.emit('grow', data);
         });
     });
     

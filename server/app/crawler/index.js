@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 var cheerio = require('cheerio');
 var Promise = require('bluebird');
 var request = require('request');
@@ -40,7 +39,9 @@ var createPage = function(page, href) {
 		})
 		.then(function() {
 			crawlEmitter.emit("newNode", childPage);
-			crawlEmitter.emit("link", {source: page._id, target: childPage._id});
+			setTimeout(function() {
+				crawlEmitter.emit("link", {source: page._id, target: childPage._id});
+			}, 100);
 		})
 		.then(null, function(err) {
 			// linksQueue.queue.update(page._id, 1);
@@ -54,11 +55,10 @@ var createPage = function(page, href) {
 		})
 		.then(function(updatedPage) {
 			if(updatedPage) {
-				crawlEmitter.emit("grow", {node: updatedPage._id});
+				crawlEmitter.emit("grow", updatedPage._id);
 			}
 		});
 };
-
 var getLinks = function(page, options) {
 	if (stop) return;
 	for (var i = 0; i < robotstxt.length; i++) {
@@ -67,7 +67,8 @@ var getLinks = function(page, options) {
 		}
 	}
 	var pageQueue = new BBQ({
-		concurrency: 100
+		concurrency: 1,
+		delay: 600
 	});
 	return requestAsync(page.url)
 		.then(function(res) {
@@ -100,7 +101,8 @@ var getLinks = function(page, options) {
 var starting_url = "https://en.wikipedia.org";
 
 var linksQueue = new BBQ({
-	concurrency: 4
+	concurrency: 1,
+	delay: 500
 });
 
 var iterate = function(page) {
@@ -133,7 +135,7 @@ module.exports = {
 					url: url
 				});
 			}).then(function(page) {
-
+				crawlEmitter.emit("newNode", page);
 				return iterate(page);
 			})
 			.then(function() {
@@ -147,7 +149,8 @@ module.exports = {
 		stop = true;
 		setTimeout(function() {
 			stop = false;
-		}, 30000);
+		}, 5000);
+		linksQueue.drain();
 		return new Promise(function(resolve, reject){resolve(); });
 	}
 };

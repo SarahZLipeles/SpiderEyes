@@ -9,86 +9,18 @@ app.directive('forceLayout', function(PageService) {
             jsonfile: '@'
         }, // {} = isolate, true = child, false/undefined = no change
         controller: function($scope) {
-            $scope.searchNode = function() {
-                var selectedVal = document.getElementById('search').value;
-                // var selectedEndVal = document.getElementById('searchEnd').value;
-                // console.log("end", selectedEndVal === "")
-                var node = $scope.svg.selectAll(".node");
-                var selectedNode = node.filter(function(d) {
-                    return d.id === selectedVal;
-                });
-                // console.log(selectedNode[0])
 
-                // var path = []
-                // path.push(selectedNode[0])
+            $scope.update = function() {
+
 
                 var link = $scope.svg.selectAll(".link")
-                    // var links = link.filter(function(l) {
-                    //     return l.source === selectedNode.index
-                    // })
-                    // console.log(links)
-
-
-                var unselected = node.filter(function(d) {
-                    return d.id !== selectedVal; // && d.id !== selectedEndVal;
-                });
-                unselected.style("opacity", "0");
-
-                link.style("opacity", "0");
-
-                d3.selectAll(".node, .link").transition()
-                    .duration(5000)
-                    .style("opacity", 1);
-
-
-                $scope.svg.attr("transform", "translate(" + (-parseInt(selectedNode.attr("cx")) + $scope.width / 2) + "," + (-parseInt(selectedNode.attr("cy")) + $scope.height / 2) + ")" + " scale(" + 1 + ")");
-            }
-        },
-        // require: 'ngModel', // Array = multiple requires, ? = optional, ^ = check parent elements
-        restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
-        // template: '',
-        templateUrl: 'js/common/directives/force-layout/force-layout.html',
-        // replace: true,
-        // transclude: true,
-        // compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
-        link: function($scope) {
-            $scope.width = $(".graph-container").width();
-            $scope.height = window.innerHeight - 150;
-            if ($scope.showsearch) $scope.height -= 50
-            $scope.jsonfile = $scope.jsonfile || "graph.json";
-            $scope.showsearch = $scope.showsearch === "true";
-
-            var force = d3.layout.force()
-                .gravity(0.05)
-                .charge(-200)
-                .linkDistance(60)
-                .size([$scope.width, $scope.height])
-
-            $scope.svg = d3.select(".graph")
-                .append("svg")
-                .attr("width", $scope.width)
-                .attr("height", $scope.height)
-                .attr("pointer-events", "all")
-                .call(d3.behavior.zoom().on("zoom", function() {
-                    $scope.svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
-                }))
-                .append('g');
-
-            d3.json($scope.jsonfile, function(error, json) {
-                if (error) throw error;
-                force
-                    .nodes(json.nodes)
-                    .links(json.links)
-                    .start();
-
-                var link = $scope.svg.selectAll(".link")
-                    .data(json.links)
+                    .data($scope.links)
                     .enter().append("line")
                     .attr("class", "link")
                     .attr("stroke-opacity", 0.2)
-                    .style("stroke-width", 6)
+                    .style("stroke-width", 6);
 
-                var drag = force.drag()
+                var drag = $scope.force.drag()
                     .origin(function(d) {
                         return d;
                     })
@@ -99,17 +31,17 @@ app.directive('forceLayout', function(PageService) {
                         d3.select(this)
                             .attr("x", d.x = d3.event.x)
                             .attr("y", d.y = d3.event.y);
-                    })
+                    });
 
                 var node = $scope.svg.selectAll(".node")
-                    .data(json.nodes)
+                    .data($scope.nodes)
                     .enter().append("g")
                     .attr("class", "node")
                     .call(drag);
 
-                //---Hover on node, fade unconnected nodes---
+                //---Hover on node, fade unconnected $scope.nodes---
                 var linkedByIndex = {};
-                json.links.forEach(function(d) {
+                $scope.links.forEach(function(d) {
                     linkedByIndex[d.source.index + "," + d.target.index] = 1;
                 });
 
@@ -140,14 +72,14 @@ app.directive('forceLayout', function(PageService) {
                                 d3.select(this).select("text")
                                     .attr("font-size", "14px")
                                     .text(function(d) {
-                                        return d.id
+                                        return d.id;
                                     });
                             } else {
                                 d3.select(this).select("text")
                                     .attr("font-size", "9px")
                                     .text(function(d) {
                                         return d.id.substring(0, 20) + "...";
-                                    })
+                                    });
                             }
                             return thisOpacity;
                         });
@@ -165,20 +97,20 @@ app.directive('forceLayout', function(PageService) {
                     })
                     .style("stroke", function(d) {
                         if (d.size > 10) {
-                            return "#b94431"
+                            return "#b94431";
                         } else if (d.size > 1.5) {
-                            return "#da991c"
+                            return "#da991c";
                         } else if (d.size > 0.3) {
-                            return "#ffffff"
+                            return "#ffffff";
                         } else {
-                            return "#5b5b5b"
+                            return "#5b5b5b";
                         }
                     })
                     .style("stroke-width", "4")
                     .on("mouseover", fade(0.3))
-                    .on("mouseout", fade(1))
-                    // .on("click", function() {
-                    // })
+                    .on("mouseout", fade(1));
+                // .on("click", function() {
+                // })
 
                 //---node text---
                 node.append("text")
@@ -204,20 +136,19 @@ app.directive('forceLayout', function(PageService) {
                         return d.id.substring(0, 20) + "...";
                     })
                     .on("mouseover", textFade(0.3))
-                    .on("mouseout", textFade(1))
-                    // .on("click", function() {
-                    //     d3.select(this).text(function(d) {
-                    //         return d.id
-                    //     })
-                    // });
+                    .on("mouseout", textFade(1));
+                // .on("click", function() {
+                //     d3.select(this).text(function(d) {
+                //         return d.id
+                //     })
+                // });
 
                 //---node tooltip
                 node.append("title")
                     .text(function(d) {
                         return "Pagerank: " + d.size + "\n\n" + d.URI;
                     });
-
-                force.on("tick", function() {
+                $scope.force.on("tick", function() {
                     link.attr("x1", function(d) {
                             return d.source.x;
                         })
@@ -246,8 +177,8 @@ app.directive('forceLayout', function(PageService) {
 
                 //---Search---
                 var optArray = [];
-                for (var i = 0; i < json.nodes.length - 1; i++) {
-                    optArray.push(json.nodes[i].id);
+                for (var i = 0; i < $scope.nodes.length - 1; i++) {
+                    optArray.push($scope.nodes[i].id);
                 }
 
                 optArray = optArray.sort();
@@ -263,7 +194,7 @@ app.directive('forceLayout', function(PageService) {
                     maxRadius = Math.sqrt(400) + 20;
 
                 function collide(alpha) {
-                    var quadtree = d3.geom.quadtree(json.nodes);
+                    var quadtree = d3.geom.quadtree($scope.nodes);
                     return function(d) {
                         var rb = Math.sqrt(d.size) + 20 + maxRadius + padding,
                             nx1 = d.x - rb,
@@ -288,6 +219,187 @@ app.directive('forceLayout', function(PageService) {
                         });
                     };
                 }
+
+
+                $scope.force.start();
+
+            };
+
+
+
+            socket.on("newNode", function(data) {
+                // page={}
+                console.log(data);
+                addNode({
+                    id: data.title || data.url.slice(30),
+                    size: data.pageRank,
+                    _id: data._id,
+                    URI: data.url
+                });
+            });
+            socket.on("link", function(data) {
+                // {source: page._id, target: childPage._id}
+                console.log(data.source);
+                addLink(data.source, data.target);
+            });
+            socket.on("grow", function(data) {
+                // page._id
+                console.log("Growing");
+                updateNode(data);
+            });
+
+
+            // Add and remove elements on the graph object
+            var addNode = function(nodeObj) {
+                $scope.nodes.push(nodeObj);
+                $scope.update();
+            };
+
+            var updateNode = function(nodeId) {
+                $scope.nodes.forEach(function(node) {
+                    if (node._id === nodeId) {
+                        node.size++;
+                    }
+                });
+                $scope.update();
+            };
+
+            // var removeNode = function(id) {
+            //     var i = 0;
+            //     var n = findNode(id);
+            //     while (i < $scope.links.length) {
+            //         if ((links[i]['source'] == n) || (links[i]['target'] == n)) {
+            //             $scope.links.splice(i, 1);
+            //         } else i++;
+            //     }
+            //     $scope.nodes.splice(findNodeIndex(id), 1);
+            //     update();
+            // };
+
+            // var removeLink = function(source, target) {
+            //     for (var i = 0; i < $scope.links.length; i++) {
+            //         if (links[i].source.id == source && $scope.links[i].target.id == target) {
+            //             $scope.links.splice(i, 1);
+            //             break;
+            //         }
+            //     }
+            //     update();
+            // };
+
+            // var removeallLinks = function() {
+            //     $scope.links.splice(0, $scope.links.length);
+            //     update();
+            // };
+
+            // var removeAllNodes = function() {
+            //     $scope.nodes.splice(0, $scope.links.length);
+            //     update();
+            // };
+
+            var addLink = function(source_id, target_id) {
+                console.log(source_id, $scope.nodes);
+                $scope.links.push({
+                    "source": findNode(source_id),
+                    "target": findNode(target_id)
+                });
+                $scope.update();
+            };
+
+            var findNode = function(_id) {
+                for (var i in $scope.nodes) {
+                    if ($scope.nodes[i]._id === _id) return $scope.nodes[i];
+                }
+            };
+
+            // var findNodeIndex = function(_id) {
+            //     for (var i = 0; i < $scope.nodes.length; i++) {
+            //         if (nodes[i]._id == _id) {
+            //             return i;
+            //         }
+            //     }
+            // };
+
+
+
+            $scope.searchNode = function() {
+                var selectedVal = document.getElementById('search').value;
+                // var selectedEndVal = document.getElementById('searchEnd').value;
+                // console.log("end", selectedEndVal === "")
+                var node = $scope.svg.selectAll(".node");
+                var selectedNode = node.filter(function(d) {
+                    return d.id === selectedVal;
+                });
+                // console.log(selectedNode[0])
+
+                // var path = []
+                // path.push(selectedNode[0])
+
+                var link = $scope.svg.selectAll(".link");
+                // var $scope.links = link.filter(function(l) {
+                //     return l.source === selectedNode.index
+                // })
+                // console.log(links)
+
+
+                var unselected = node.filter(function(d) {
+                    return d.id !== selectedVal; // && d.id !== selectedEndVal;
+                });
+                unselected.style("opacity", "0");
+
+                link.style("opacity", "0");
+
+                d3.selectAll(".node, .link").transition()
+                    .duration(5000)
+                    .style("opacity", 1);
+
+                $scope.svg.attr("transform", "translate(" + (-parseInt(selectedNode.attr("cx")) + $scope.width / 2) + "," + (-parseInt(selectedNode.attr("cy")) + $scope.height / 2) + ")" + " scale(" + 1 + ")");
+            };
+        },
+        // require: 'ngModel', // Array = multiple requires, ? = optional, ^ = check parent elements
+        restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
+        // template: '',
+        templateUrl: 'js/common/directives/force-layout/force-layout.html',
+        // replace: true,
+        // transclude: true,
+        // compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
+        link: function($scope) {
+            $scope.width = $(".graph-container").width();
+            $scope.height = window.innerHeight - 150;
+            if ($scope.showsearch) $scope.height -= 50;
+            $scope.jsonfile = $scope.jsonfile || "graph.json";
+            $scope.showsearch = $scope.showsearch === "true";
+
+            $scope.force = d3.layout.force()
+                .gravity(0.05)
+                .charge(-200)
+                .linkDistance(60)
+                .size([$scope.width, $scope.height]);
+
+            //0.5,-2000: 25s
+            //
+            //
+            //
+            $scope.svg = d3.select(".graph")
+                .append("svg")
+                .attr("width", $scope.width)
+                .attr("height", $scope.height)
+                .attr("pointer-events", "all")
+                .call(d3.behavior.zoom().on("zoom", function() {
+                    $scope.svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+                }))
+                .append('g');
+
+            d3.json($scope.jsonfile, function(error, json) {
+                if (error) throw error;
+                $scope.force.links(json.links);
+                $scope.force.nodes(json.nodes);
+                $scope.nodes = $scope.force.nodes();
+                $scope.links = $scope.force.links();
+                console.log("nodes", $scope.nodes)
+                console.log("force.links()", $scope.force.links.toString());
+                console.log("links", $scope.links)
+                $scope.update();
+
             });
         }
     };
