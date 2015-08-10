@@ -12,12 +12,7 @@ app.controller('AboutController', function($scope, AboutFactory) {
   // make sure your path is valid given any size because size scales if the chart scales.
   $scope.isCrawling = false;
 
-  socket.on("link", function(data) {
-    console.log("RECIEVED");
-  });
-  socket.on("newNode", function(data) {
-    console.log("RECIEVED");
-  });
+  
 
   $scope.crawl = function(startingUrl) {
     $scope.isCrawling = true;

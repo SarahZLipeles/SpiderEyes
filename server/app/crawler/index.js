@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 var cheerio = require('cheerio');
 var Promise = require('bluebird');
 var request = require('request');
@@ -54,7 +53,7 @@ var createPage = function(page, href) {
 		})
 		.then(function(updatedPage) {
 			if(updatedPage) {
-				crawlEmitter.emit("grow", {node: updatedPage._id});
+				crawlEmitter.emit("grow", updatedPage._id);
 			}
 		});
 };
