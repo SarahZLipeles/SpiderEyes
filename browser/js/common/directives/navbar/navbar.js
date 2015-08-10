@@ -7,11 +7,24 @@ app.directive('navbar', function($rootScope, AuthService, AUTH_EVENTS, $state) {
         link: function(scope) {
 
             scope.items = [{
-                label: 'Spider',
-                state: 'about'
+                label: 'Nest',
+                state: 'home'
             }, {
-                label: 'Demo',
-                state: 'docs'
+                label: 'Webs',
+                state: 'docs',
+                children: [{
+                    label: 'Javascript 1',
+                    url: 'javascript1'
+                }, {
+                    label: 'Javascript 2',
+                    url: 'javascript2'
+                }, {
+                    label: 'Jesus',
+                    url: 'jesus'
+                }]
+            }, {
+                label: 'Prey Capture',
+                state: 'about'
             }, {
                 label: 'Members Only',
                 state: 'membersOnly',

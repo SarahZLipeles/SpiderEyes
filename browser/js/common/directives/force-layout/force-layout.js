@@ -6,6 +6,7 @@ app.directive('forceLayout', function(PageService) {
         // terminal: true,
         scope: {
             showsearch: '@',
+            showupdate: '@',
             jsonfile: '@'
         }, // {} = isolate, true = child, false/undefined = no change
         controller: function($scope) {
@@ -17,14 +18,14 @@ app.directive('forceLayout', function(PageService) {
 
                 var link = $scope.svg.selectAll(".link")
                     .data($scope.links);
-                    // .data($scope.links, function(d) {
-                    //     return d.source.id + "-" + d.target.id;
-                    // });
+                // .data($scope.links, function(d) {
+                //     return d.source.id + "-" + d.target.id;
+                // });
 
                 link.enter().append("line")
                     .attr("class", "link")
-                    .attr("stroke-opacity", 0.2)
-                    .style("stroke-width", 6);
+                    .attr("stroke-opacity", 0.1)
+                    .style("stroke-width", 5);
 
                 // link.exit().remove();
 
@@ -84,20 +85,37 @@ app.directive('forceLayout', function(PageService) {
                             this.setAttribute('fill-opacity', thisOpacity);
                             if (opacity < 1 && isConnected(d, o)) {
                                 d3.select(this).select("text")
-                                    .attr("font-size", "14px")
+                                    .attr("font-size", function(d) {
+                                        if (d.size > 80) return d.size + "px";
+                                        else return "14px";
+                                    })
+                                    .attr("font-weight", function(d) {
+                                        if (d.size > 80) return "bold";
+                                        else return "100";
+                                    })
                                     .text(function(d) {
                                         return d.id;
                                     });
                             } else {
                                 d3.select(this).select("text")
-                                    .attr("font-size", "9px")
+                                    .attr("font-size", function(d) {
+                                        if (d.size > 80) return d.size + "px";
+                                        else return "9px";
+                                    })
+                                    .attr("font-weight", function(d) {
+                                        if (d.size > 80) return "bold";
+                                        else return "100";
+                                    })
                                     .text(function(d) {
                                         if (d.id) {
-                                            return d.id.substring(0, 20) + "...";
+                                            if (d.id.length > 10)
+                                                return d.id.substring(0, 10) + "...";
+                                            else return d.id
                                         } else {
                                             return "";
                                         }
-                                    });
+                                    })
+
                             }
                             return thisOpacity;
                         });
@@ -115,18 +133,28 @@ app.directive('forceLayout', function(PageService) {
                     })
                     .attr("class", "nodeStrokeClass")
                     .style("stroke", function(d) {
-                        if (d.size > 100) {
+                        if (d.size >= 80) {
                             return "#b94431";
-                        } else if (d.size > 20) {
-                            return "#da991c";
-                        } else if (d.size > 3) {
+                        } else if (d.size >= 20) {
+                            return "#da991c"; //#1A94DF
+                        } else if (d.size >= 3) {
                             return "#1A94DF";
                         } else {
-                            return "#ffffff"; //"#5b5b5b";
+                            return "#ffffff"; //#cccccc"; //"#5b5b5b";
                         }
                     })
-                    .style("stroke-width", "4")
-                    .on("mouseover", fade(0.3))
+                    .style("stroke-width", function(d) {
+                        if (d.size >= 80) {
+                            return "20";
+                        } else if (d.size >= 20) {
+                            return "10";
+                        } else if (d.size >= 3) {
+                            return "7";
+                        } else {
+                            return "5";
+                        }
+                    })
+                    .on("mouseover", fade(0.2))
                     .on("mouseout", fade(1));
                 // .on("click", function() {
                 // })
@@ -138,27 +166,23 @@ app.directive('forceLayout', function(PageService) {
                     .attr("fill", "white")
                     .attr("stroke-width", "0")
                     .attr("font-size", function(d) {
-                        if (d.color == '#b94431') {
-                            return 10 + (d.size * 2) + 'px';
-                        } else {
-                            return "9px";
-                        }
+                        if (d.size > 80) return d.size + "px";
+                        else return "9px";
                     })
                     .attr("font-weight", function(d) {
-                        if (d.color == '#b94431') {
-                            return "bold";
-                        } else {
-                            return "100";
-                        }
+                        if (d.size > 80) return "bold";
+                        else return "100";
                     })
                     .text(function(d) {
                         if (d.id) {
-                            return d.id.substring(0, 20) + "...";
+                            if (d.id.length > 10)
+                                return d.id.substring(0, 10) + "...";
+                            else return d.id
                         } else {
                             return "";
                         }
                     })
-                    .on("mouseover", textFade(0.3))
+                    .on("mouseover", textFade(0.2))
                     .on("mouseout", textFade(1));
                 // .on("click", function() {
                 //     d3.select(this).text(function(d) {
@@ -203,7 +227,7 @@ app.directive('forceLayout', function(PageService) {
                             return "translate(" + d.x + "," + d.y + ")";
                         });
 
-                    node.each(collide(1));
+                    node.each(collide(0.5));
                 });
 
 
@@ -252,35 +276,6 @@ app.directive('forceLayout', function(PageService) {
                         });
                     };
                 }
-                // var padding = 1, // separation between circles
-                //     maxRadius = Math.sqrt(400) + 20;
-
-                // function collide(alpha) {
-                //     var quadtree = d3.geom.quadtree($scope.nodes);
-                //     return function(d) {
-                //         var rb = Math.sqrt(d.size) + 20 + maxRadius + padding,
-                //             nx1 = d.x - rb,
-                //             nx2 = d.x + rb,
-                //             ny1 = d.y - rb,
-                //             ny2 = d.y + rb;
-
-                //         quadtree.visit(function(quad, x1, y1, x2, y2) {
-                //             if (quad.point && (quad.point !== d)) {
-                //                 var x = d.x - quad.point.x,
-                //                     y = d.y - quad.point.y,
-                //                     l = Math.sqrt(x * x + y * y);
-                //                 if (l < rb) {
-                //                     l = (l - rb) / l * alpha;
-                //                     d.x -= x *= l;
-                //                     d.y -= y *= l;
-                //                     quad.point.x += x;
-                //                     quad.point.y += y;
-                //                 }
-                //             }
-                //             return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-                //         });
-                //     };
-                // }
 
                 $scope.force.start();
             };
@@ -312,7 +307,9 @@ app.directive('forceLayout', function(PageService) {
             var addNode = function(nodeObj) {
                 $scope.nodes.push(nodeObj);
                 // $scope.update();
-                if ($scope.nodes.length === 1) $scope.update();
+                // if ($scope.nodes.length === 1) $scope.update();
+                $scope.update();
+                document.getElementById("latest").innerHTML = "Latest page: " + nodeObj.id;
             };
 
             var updateNode = function(nodeId) {
@@ -439,32 +436,37 @@ app.directive('forceLayout', function(PageService) {
         // transclude: true,
         // compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
         link: function($scope) {
-            $scope.width = $(".graph-container").width();
-            $scope.height = window.innerHeight - 150;
-            if ($scope.showsearch) $scope.height -= 50;
-            $scope.jsonfile = $scope.jsonfile || "graph.json";
+
+            $scope.jsonfile = $scope.jsonfile || "graph25sm.json";
             $scope.showsearch = $scope.showsearch === "true";
+            $scope.showupdate = $scope.showupdate === "true";
+
+            $scope.width = $(".graph-container").width();
+            $scope.height = window.innerHeight - 100;
+            if ($scope.showsearch) $scope.height -= 50;
+            if ($scope.showupdate) $scope.height -= 50;
 
             $scope.force = d3.layout.force()
                 .gravity(0.05)
-                .charge(-500)
-                .linkDistance(60)
+                .charge(-200)
+                .linkDistance(50)
                 .size([$scope.width, $scope.height]);
 
             var zoom = d3.behavior.zoom()
-                .translate([700, 400])
-                .scale(0.3);
+                .translate([600, 250])
+                .scale(0.2);
 
             $scope.svg = d3.select(".graph")
                 .append("svg")
                 .attr("width", $scope.width)
                 .attr("height", $scope.height)
                 .attr("pointer-events", "all")
-                .call(d3.behavior.zoom().on("zoom", function() {
+                .call(zoom.on("zoom", function() {
+                    // console.log(d3.event.scale)
                     $scope.svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
                 }))
                 .append('g')
-                .attr("transform", "translate(700,400)scale(0.3,0.3)");
+                .attr("transform", "translate(600,250) scale(0.2)");
 
             d3.json($scope.jsonfile, function(error, json) {
                 if (error) throw error;
