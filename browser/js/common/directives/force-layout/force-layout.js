@@ -312,7 +312,7 @@ app.directive('forceLayout', function(PageService) {
                 console.log(findNodeIndex(source_id));
                 $scope.links.push({
                     "source": findNodeAndUpdate(source_id),
-                    "target": findNode(target_id)
+                    "target": findNodeAndUpdate(target_id)
                 });
                 $scope.update();
             };
