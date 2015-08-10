@@ -23,7 +23,8 @@ var createPage = function(page, href) {
 	var childPage;
 	console.log(href);
 	return Page.create({
-			url: starting_url + href
+			url: starting_url + href,
+			title: href.slice(6)
 		})
 		.then(function(cP) {
 			childPage = cP;
@@ -59,6 +60,14 @@ var createPage = function(page, href) {
 		.then(function(updatedPage) {
 			if (updatedPage) {
 				crawlEmitter.emit("grow", updatedPage._id);
+				return Page.findByIdAndUpdate(page._id, {
+					$addToSet: {
+						links: updatedPage._id
+					},
+					$set: {
+						title: page.title
+					}
+				});
 			}
 		});
 };
@@ -79,6 +88,7 @@ var getLinks = function(page, options) {
 			var $ = cheerio.load(res[0].body);
 			var links = [];
 			var anchorTags = $("a");
+			anchorTags.splice(25);
 			var title = $("head title").text();
 			title = title.slice(0, title.length - 35);
 			console.log(title);
@@ -162,7 +172,7 @@ module.exports = {
 
 
 // module.exports = function() {
-// 	var pagesQueue = new SSPPQ({
+// 	var pagesQueue = new BBQ({
 // 		concurrency: 100
 // 	});
 
@@ -183,10 +193,12 @@ module.exports = {
 // 	};
 
 // 	Page.find({pageRank: {$gte: 2}, title: {$exists: false}})
-// 	.then(function(pages) {
-// 		pages.map(function(page) {
-// 			pagesQueue.add(getTitle.bind(null, page));
-// 		});
+// 		.then(function(pages) {
+// 			pages.map(function(page) {
+// 				pagesQueue.add(getTitle.bind(null, page));
+// 			});
+// 			pagesQueue.start();
+// 	});
 // };
 
 // var getLinks = function(page, options) {

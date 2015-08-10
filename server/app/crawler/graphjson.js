@@ -41,7 +41,8 @@ var pageToNode = function(page) {
 		    "size": page.pageRank,
 		    "id": page.title,
 		    "URI": page.url,
-		    "_id": page._id
+		    "_id": page._id,
+		    "weight": 1000
 		};
 	graphjson.nodes.push(node);
 	return {
