@@ -12,8 +12,6 @@ app.directive('forceLayout', function(PageService) {
 
             $scope.update = function() {
 
-                $scope.force.start();
-
                 var link = $scope.svg.selectAll(".link")
                     .data($scope.links)
                     .enter().append("line")
@@ -223,27 +221,28 @@ app.directive('forceLayout', function(PageService) {
                     };
                 }
 
-
-
+                $scope.force.start();
             };
 
-
-
-            socket.on("link", function(data) {
-                // {source: page._id, target: childPage._id}
-                console.log("RECIEVED");
-            });
             socket.on("newNode", function(data) {
                 // page={}
+                console.log(data);
                 addNode({
-                    id: data.title,
-                    size: pageRank,
-                    _id: data._id
-                })
+                    id: data.title || data.url.slice(30),
+                    size: data.pageRank,
+                    _id: data._id,
+                    URI: data.url
+                });
+            });
+            socket.on("link", function(data) {
+                // {source: page._id, target: childPage._id}
+                console.log(data.source);
+                addLink(data.source, data.target);
             });
             socket.on("grow", function(data) {
                 // page._id
-                console.log("RECIEVED");
+                console.log("Growing");
+                updateNode(data);
             });
 
 
@@ -380,12 +379,6 @@ app.directive('forceLayout', function(PageService) {
                 .linkDistance(50)
                 .size([$scope.width, $scope.height]);
 
-            //0.5,-2000: 25s
-            //0.05,-200: 20s
-            //0.005,-20: 21s
-            //0.1,-200:
-            //0.1,-200,50:15s
-            // console.log("scale", d3.event.scale)
             var zoom = d3.behavior.zoom()
                 .translate([700, 400])
                 .scale(0.3);
@@ -409,7 +402,6 @@ app.directive('forceLayout', function(PageService) {
                 $scope.links = $scope.force.links();
 
                 $scope.update();
-
             });
         }
     };
