@@ -12,13 +12,14 @@ app.directive('forceLayout', function(PageService) {
 
             $scope.update = function() {
 
-
+                console.log($scope.links);
                 var link = $scope.svg.selectAll(".link")
                     .data($scope.links)
                     .enter().append("line")
                     .attr("class", "link")
                     .attr("stroke-opacity", 0.2)
                     .style("stroke-width", 6);
+
 
                 var drag = $scope.force.drag()
                     .origin(function(d) {
@@ -78,7 +79,11 @@ app.directive('forceLayout', function(PageService) {
                                 d3.select(this).select("text")
                                     .attr("font-size", "9px")
                                     .text(function(d) {
-                                        return d.id.substring(0, 20) + "...";
+                                        if (d.id) {
+                                            return d.id.substring(0, 20) + "...";
+                                        } else {
+                                            return "";
+                                        }
                                     });
                             }
                             return thisOpacity;
@@ -93,7 +98,7 @@ app.directive('forceLayout', function(PageService) {
                 //---node circles---
                 node.append("circle")
                     .attr("r", function(d) {
-                        return Math.sqrt(d.size) + 20;
+                        return d.size + 20;
                     })
                     .style("stroke", function(d) {
                         if (d.size > 10) {
@@ -133,7 +138,11 @@ app.directive('forceLayout', function(PageService) {
                         }
                     })
                     .text(function(d) {
-                        return d.id.substring(0, 20) + "...";
+                        if (d.id) {
+                            return d.id.substring(0, 20) + "...";
+                        } else {
+                            return "";
+                        }
                     })
                     .on("mouseover", textFade(0.3))
                     .on("mouseout", textFade(1));
@@ -172,8 +181,9 @@ app.directive('forceLayout', function(PageService) {
                             return "translate(" + d.x + "," + d.y + ")";
                         });
 
-                    node.each(collide(0.5));
+                    // node.each(collide(0.5));
                 });
+
 
                 //---Search---
                 var optArray = [];
@@ -190,36 +200,35 @@ app.directive('forceLayout', function(PageService) {
                 });
 
                 //---collision avoidance---
-                var padding = 1, // separation between circles
-                    maxRadius = Math.sqrt(400) + 20;
+                // var padding = 1, // separation between circles
+                //     maxRadius = Math.sqrt(400) + 20;
 
-                function collide(alpha) {
-                    var quadtree = d3.geom.quadtree($scope.nodes);
-                    return function(d) {
-                        var rb = Math.sqrt(d.size) + 20 + maxRadius + padding,
-                            nx1 = d.x - rb,
-                            nx2 = d.x + rb,
-                            ny1 = d.y - rb,
-                            ny2 = d.y + rb;
+                // function collide(alpha) {
+                //     var quadtree = d3.geom.quadtree($scope.nodes);
+                //     return function(d) {
+                //         var rb = Math.sqrt(d.size) + 20 + maxRadius + padding,
+                //             nx1 = d.x - rb,
+                //             nx2 = d.x + rb,
+                //             ny1 = d.y - rb,
+                //             ny2 = d.y + rb;
 
-                        quadtree.visit(function(quad, x1, y1, x2, y2) {
-                            if (quad.point && (quad.point !== d)) {
-                                var x = d.x - quad.point.x,
-                                    y = d.y - quad.point.y,
-                                    l = Math.sqrt(x * x + y * y);
-                                if (l < rb) {
-                                    l = (l - rb) / l * alpha;
-                                    d.x -= x *= l;
-                                    d.y -= y *= l;
-                                    quad.point.x += x;
-                                    quad.point.y += y;
-                                }
-                            }
-                            return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-                        });
-                    };
-                }
-
+                //         quadtree.visit(function(quad, x1, y1, x2, y2) {
+                //             if (quad.point && (quad.point !== d)) {
+                //                 var x = d.x - quad.point.x,
+                //                     y = d.y - quad.point.y,
+                //                     l = Math.sqrt(x * x + y * y);
+                //                 if (l < rb) {
+                //                     l = (l - rb) / l * alpha;
+                //                     d.x -= x *= l;
+                //                     d.y -= y *= l;
+                //                     quad.point.x += x;
+                //                     quad.point.y += y;
+                //                 }
+                //             }
+                //             return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                //         });
+                //     };
+                // }
 
                 $scope.force.start();
 
@@ -234,7 +243,8 @@ app.directive('forceLayout', function(PageService) {
                     id: data.title || data.url.slice(30),
                     size: data.pageRank,
                     _id: data._id,
-                    URI: data.url
+                    URI: data.url,
+                    weight: 1000
                 });
             });
             socket.on("link", function(data) {
@@ -252,13 +262,14 @@ app.directive('forceLayout', function(PageService) {
             // Add and remove elements on the graph object
             var addNode = function(nodeObj) {
                 $scope.nodes.push(nodeObj);
-                $scope.update();
+                // $scope.update();
+                if ($scope.nodes.length === 1) $scope.update();
             };
 
             var updateNode = function(nodeId) {
                 $scope.nodes.forEach(function(node) {
-                    if (node._id === nodeId) {
-                        node.size++;
+                    if ($scope.node._id === nodeId) {
+                        $scope.node.size++;
                     }
                 });
                 $scope.update();
@@ -298,26 +309,36 @@ app.directive('forceLayout', function(PageService) {
 
             var addLink = function(source_id, target_id) {
                 console.log(source_id, $scope.nodes);
+                console.log(findNodeIndex(source_id));
                 $scope.links.push({
-                    "source": findNode(source_id),
+                    "source": findNodeAndUpdate(source_id),
                     "target": findNode(target_id)
                 });
                 $scope.update();
             };
 
-            var findNode = function(_id) {
+            var findNodeAndUpdate = function(_id) {
                 for (var i in $scope.nodes) {
-                    if ($scope.nodes[i]._id === _id) return $scope.nodes[i];
+                    if ($scope.nodes[i]._id == _id) {
+                        $scope.nodes[i].weight += 1;
+                        return $scope.nodes[i];
+                    }
                 }
             };
 
-            // var findNodeIndex = function(_id) {
-            //     for (var i = 0; i < $scope.nodes.length; i++) {
-            //         if (nodes[i]._id == _id) {
-            //             return i;
-            //         }
-            //     }
-            // };
+            var findNode = function(_id) {
+                for (var i in $scope.nodes) {
+                    if ($scope.nodes[i]._id == _id) return $scope.nodes[i];
+                }
+            };
+
+            var findNodeIndex = function(_id) {
+                for (var i = 0; i < $scope.nodes.length; i++) {
+                    if ($scope.nodes[i]._id == _id) {
+                        return i;
+                    }
+                }
+            };
 
 
 
@@ -371,7 +392,7 @@ app.directive('forceLayout', function(PageService) {
 
             $scope.force = d3.layout.force()
                 .gravity(0.05)
-                .charge(-200)
+                .charge(-500)
                 .linkDistance(60)
                 .size([$scope.width, $scope.height]);
 
@@ -395,9 +416,9 @@ app.directive('forceLayout', function(PageService) {
                 $scope.force.nodes(json.nodes);
                 $scope.nodes = $scope.force.nodes();
                 $scope.links = $scope.force.links();
-                console.log("nodes", $scope.nodes)
+                console.log("nodes", $scope.nodes);
                 console.log("force.links()", $scope.force.links.toString());
-                console.log("links", $scope.links)
+                console.log("links", $scope.links);
                 $scope.update();
 
             });
