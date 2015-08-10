@@ -442,13 +442,13 @@ app.directive('forceLayout', function(PageService) {
             $scope.showupdate = $scope.showupdate === "true";
 
             $scope.width = $(".graph-container").width();
-            $scope.height = window.innerHeight - 100;
-            if ($scope.showsearch) $scope.height -= 50;
-            if ($scope.showupdate) $scope.height -= 50;
+            $scope.height = window.innerHeight - 150;
+            if ($scope.showsearch) $scope.height -= 25;
+            if ($scope.showupdate) $scope.height -= 25;
 
             $scope.force = d3.layout.force()
                 .gravity(0.05)
-                .charge(-200)
+                .charge(-150)
                 .linkDistance(50)
                 .size([$scope.width, $scope.height]);
 

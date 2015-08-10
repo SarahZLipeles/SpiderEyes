@@ -5,8 +5,8 @@
         </div>
         <ul class="nav navbar-nav">
             <li ng-repeat="item in items" ng-show="!item.auth || isLoggedIn()">
-                <a ng-if="item.label!='Case Studies'" ui-sref-active="active" ui-sref="{{ item.state }}">{{ item.label }}</a>
-                <div class="dropdown" ng-if="item.label=='Case Studies'">
+                <a ng-if="item.label!='Webs'" ui-sref-active="active" ui-sref="{{ item.state }}">{{ item.label }}</a>
+                <div class="dropdown" ng-if="item.label=='Webs'">
                     <a class="dropdown-toggle" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                     {{ item.label }}
                     <span class="caret"></span>
