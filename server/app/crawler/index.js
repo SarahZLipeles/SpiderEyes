@@ -93,8 +93,7 @@ module.exports = {
 				}
 			}
 			var pageQueue = new BBQ({
-				concurrency: 1,
-				delay: 600
+				concurrency: 1
 			});
 			return requestAsync(page.url)
 				.then(function(res) {
@@ -102,7 +101,7 @@ module.exports = {
 					var $ = cheerio.load(res[0].body);
 					var links = [];
 					var anchorTags = $("a");
-					anchorTags.splice(25);
+					anchorTags.splice(60);
 					var title = $("head title").text();
 					title = title.slice(0, title.length - 35);
 					console.log(title);
@@ -139,8 +138,7 @@ module.exports = {
 				});
 		};
 		linksQueue = new BBQ({
-			concurrency: 1,
-			delay: 500
+			concurrency: 1
 		});
 		io = require('../../io')();
 		return Page.remove().then(function() {

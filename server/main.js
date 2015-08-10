@@ -21,7 +21,7 @@ var startServer = function() {
 
     server.listen(PORT, function() {
         console.log(chalk.blue('Server started on port', chalk.magenta(PORT)));
-        // test("https://en.wikipedia.org/wiki/Jesus");
+        // test("https://en.wikipedia.org/wiki/JavaScript");
     });
 
 };
