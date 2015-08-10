@@ -40,8 +40,11 @@ var createPage = function(page, href) {
 		.then(function() {
 			crawlEmitter.emit("newNode", childPage);
 			setTimeout(function() {
-				crawlEmitter.emit("link", {source: page._id, target: childPage._id});
-			}, 100);
+				crawlEmitter.emit("link", {
+					source: page._id,
+					target: childPage._id
+				});
+			}, 200);
 		})
 		.then(null, function(err) {
 			// linksQueue.queue.update(page._id, 1);
@@ -54,7 +57,7 @@ var createPage = function(page, href) {
 			}).exec();
 		})
 		.then(function(updatedPage) {
-			if(updatedPage) {
+			if (updatedPage) {
 				crawlEmitter.emit("grow", updatedPage._id);
 			}
 		});
@@ -151,7 +154,9 @@ module.exports = {
 			stop = false;
 		}, 5000);
 		linksQueue.drain();
-		return new Promise(function(resolve, reject){resolve(); });
+		return new Promise(function(resolve, reject) {
+			resolve();
+		});
 	}
 };
 

@@ -9,15 +9,23 @@ app.directive('forceLayout', function(PageService) {
             jsonfile: '@'
         }, // {} = isolate, true = child, false/undefined = no change
         controller: function($scope) {
+            $scope.removeGraph = function() {
+
+            }
 
             $scope.update = function() {
 
                 var link = $scope.svg.selectAll(".link")
-                    .data($scope.links)
-                    .enter().append("line")
+                    .data($scope.links, function(d) {
+                        return d.source.id + "-" + d.target.id;
+                    });
+
+                link.enter().append("line")
                     .attr("class", "link")
                     .attr("stroke-opacity", 0.2)
                     .style("stroke-width", 6);
+
+                link.exit().remove();
 
                 var drag = $scope.force.drag()
                     .origin(function(d) {
@@ -33,15 +41,21 @@ app.directive('forceLayout', function(PageService) {
                     });
 
                 var node = $scope.svg.selectAll(".node")
-                    .data($scope.nodes)
-                    .enter().append("g")
+                    .data($scope.nodes, function(d) {
+                        return d.id;
+                    });
+
+                var nodeEnter = node.enter().append("g")
                     .attr("class", "node")
                     .call(drag);
 
                 //---Hover on node, fade unconnected $scope.nodes---
                 var linkedByIndex = {};
                 $scope.links.forEach(function(d) {
-                    linkedByIndex[d.source.index + "," + d.target.index] = 1;
+                    // console.log("link", d)
+                    var sourceIndex = d.source.index || d.source;
+                    var targetIndex = d.target.index || d.target;
+                    linkedByIndex[sourceIndex + "," + targetIndex] = 1;
                 });
 
                 function isConnected(a, b) {
@@ -50,7 +64,7 @@ app.directive('forceLayout', function(PageService) {
 
                 function fade(opacity) {
                     return function(d) {
-                        node.style("stroke-opacity", function(o) {
+                        nodeEnter.style("stroke-opacity", function(o) {
                             var thisOpacity = isConnected(d, o) ? 1 : opacity;
                             this.setAttribute('fill-opacity', thisOpacity);
                             return thisOpacity;
@@ -64,7 +78,7 @@ app.directive('forceLayout', function(PageService) {
 
                 function textFade(opacity) {
                     return function(d) {
-                        node.style("stroke-opacity", function(o) {
+                        nodeEnter.style("stroke-opacity", function(o) {
                             var thisOpacity = isConnected(d, o) ? 1 : opacity;
                             this.setAttribute('fill-opacity', thisOpacity);
                             if (opacity < 1 && isConnected(d, o)) {
@@ -90,9 +104,9 @@ app.directive('forceLayout', function(PageService) {
                 }
 
                 //---node circles---
-                node.append("circle")
+                nodeEnter.append("circle")
                     .attr("r", function(d) {
-                        return Math.sqrt(d.size) + 10;
+                        return d.size + 10;
                     })
                     .attr("class", "nodeStrokeClass")
                     .style("stroke", function(d) {
@@ -101,9 +115,9 @@ app.directive('forceLayout', function(PageService) {
                         } else if (d.size > 20) {
                             return "#da991c";
                         } else if (d.size > 3) {
-                            return "#ffffff";
+                            return "#1A94DF";
                         } else {
-                            return "#5b5b5b";
+                            return "#ffffff"; //"#5b5b5b";
                         }
                     })
                     .style("stroke-width", "4")
@@ -113,7 +127,7 @@ app.directive('forceLayout', function(PageService) {
                 // })
 
                 //---node text---
-                node.append("text")
+                nodeEnter.append("text")
                     .attr("class", "text")
                     .attr("text-anchor", "middle")
                     .attr("fill", "white")
@@ -144,16 +158,21 @@ app.directive('forceLayout', function(PageService) {
                 // });
 
                 //---node tooltip
-                node.append("title")
+                nodeEnter.append("title")
                     .text(function(d) {
                         return "Pagerank: " + d.size + "\n\n" + d.URI;
                     });
 
+                node.exit().remove();
+
                 $scope.force.on("tick", function() {
                     link.attr("x1", function(d) {
+                            // console.log("link x", d.source.x)
                             return d.source.x;
                         })
                         .attr("y1", function(d) {
+                            // console.log("link y", d.source.y)
+
                             return d.source.y;
                         })
                         .attr("x2", function(d) {
@@ -164,16 +183,18 @@ app.directive('forceLayout', function(PageService) {
                         });
 
                     node.attr("cx", function(d) {
+                            // console.log("node x", d.x)
                             return d.x;
                         })
                         .attr("cy", function(d) {
+                            // console.log("node y", d.y)
                             return d.y;
                         })
                         .attr("transform", function(d) {
                             return "translate(" + d.x + "," + d.y + ")";
                         });
 
-                    node.each(collide(0.5));
+                    node.each(collide(1));
                 });
 
                 //---Search---
@@ -192,12 +213,12 @@ app.directive('forceLayout', function(PageService) {
 
                 //---collision avoidance---
                 var padding = 1, // separation between circles
-                    maxRadius = Math.sqrt(250) + 10;
+                    maxRadius = 250;
 
                 function collide(alpha) {
                     var quadtree = d3.geom.quadtree($scope.nodes);
                     return function(d) {
-                        var rb = Math.sqrt(d.size) + 10 + maxRadius + padding,
+                        var rb = d.size + 10 + maxRadius + padding,
                             nx1 = d.x - rb,
                             nx2 = d.x + rb,
                             ny1 = d.y - rb,
@@ -207,9 +228,10 @@ app.directive('forceLayout', function(PageService) {
                             if (quad.point && (quad.point !== d)) {
                                 var x = d.x - quad.point.x,
                                     y = d.y - quad.point.y,
-                                    l = Math.sqrt(x * x + y * y);
-                                if (l < rb) {
-                                    l = (l - rb) / l * alpha;
+                                    l = Math.sqrt(x * x + y * y),
+                                    r = d.size + 10 + quad.point.size + 10 + padding;
+                                if (l < r) {
+                                    l = (l - r) / l * alpha;
                                     d.x -= x *= l;
                                     d.y -= y *= l;
                                     quad.point.x += x;
@@ -226,7 +248,7 @@ app.directive('forceLayout', function(PageService) {
 
             socket.on("newNode", function(data) {
                 // page={}
-                console.log(data);
+                // console.log(data);
                 addNode({
                     id: data.title || data.url.slice(30),
                     size: data.pageRank,
@@ -236,12 +258,12 @@ app.directive('forceLayout', function(PageService) {
             });
             socket.on("link", function(data) {
                 // {source: page._id, target: childPage._id}
-                console.log(data.source);
+                // console.log(data.source);
                 addLink(data.source, data.target);
             });
             socket.on("grow", function(data) {
                 // page._id
-                console.log("Growing");
+                // console.log("Growing");
                 updateNode(data);
             });
 
@@ -294,6 +316,7 @@ app.directive('forceLayout', function(PageService) {
             // };
 
             var addLink = function(source_id, target_id) {
+                // console.log("find node", findNode(source_id))
                 $scope.links.push({
                     "source": findNode(source_id),
                     "target": findNode(target_id)
@@ -304,7 +327,7 @@ app.directive('forceLayout', function(PageService) {
 
             var findNode = function(_id) {
                 for (var i in $scope.nodes) {
-                    if (nodes[i]._id === _id) return $scope.nodes[i];
+                    if ($scope.nodes[i]._id === _id) return $scope.nodes[i];
                 }
             };
 
@@ -375,7 +398,8 @@ app.directive('forceLayout', function(PageService) {
 
             $scope.force = d3.layout.force()
                 .gravity(0.1)
-                .charge(-200)
+                .charge(-500)
+                .friction(0)
                 .linkDistance(50)
                 .size([$scope.width, $scope.height]);
 
@@ -396,10 +420,14 @@ app.directive('forceLayout', function(PageService) {
 
             d3.json($scope.jsonfile, function(error, json) {
                 if (error) throw error;
+
                 $scope.force.links(json.links);
                 $scope.force.nodes(json.nodes);
+
                 $scope.nodes = $scope.force.nodes();
+                // console.log("nodes", $scope.nodes)
                 $scope.links = $scope.force.links();
+                // console.log("links", $scope.links)
 
                 $scope.update();
             });
