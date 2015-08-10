@@ -18,110 +18,112 @@ var robotstxt = "";
 
 var stop = false;
 
-var createPage = function(page, href) {
-	if (stop) return;
-	var childPage;
-	console.log(href);
-	return Page.create({
-			url: starting_url + href,
-			title: href.slice(6)
-		})
-		.then(function(cP) {
-			childPage = cP;
-			return Page.findByIdAndUpdate(page._id, {
-				$addToSet: {
-					links: childPage._id
-				},
-				$set: {
-					title: page.title
-				}
-			});
 
-		})
-		.then(function() {
-			crawlEmitter.emit("newNode", childPage);
-			setTimeout(function() {
-				crawlEmitter.emit("link", {
-					source: page._id,
-					target: childPage._id
-				});
-			}, 200);
-		})
-		.then(null, function(err) {
-			// linksQueue.queue.update(page._id, 1);
-			return Page.findOneAndUpdate({
-				url: starting_url + href
-			}, {
-				$inc: {
-					pageRank: 1
-				}
-			}).exec();
-		})
-		.then(function(updatedPage) {
-			if (updatedPage) {
-				crawlEmitter.emit("grow", updatedPage._id);
-				return Page.findByIdAndUpdate(page._id, {
-					$addToSet: {
-						links: updatedPage._id
-					},
-					$set: {
-						title: page.title
-					}
-				});
-			}
-		});
-};
-var getLinks = function(page, options) {
-	if (stop) return;
-	for (var i = 0; i < robotstxt.length; i++) {
-		if (page.url.indexOf(robotstxt[i]) !== -1) {
-			return;
-		}
-	}
-	var pageQueue = new BBQ({
-		concurrency: 1,
-		delay: 600
-	});
-	return requestAsync(page.url)
-		.then(function(res) {
-			if (!res) return;
-			var $ = cheerio.load(res[0].body);
-			var links = [];
-			var anchorTags = $("a");
-			anchorTags.splice(25);
-			var title = $("head title").text();
-			title = title.slice(0, title.length - 35);
-			console.log(title);
-			page.title = title;
-			anchorTags.each(function() {
-				var href = $(this).attr('href');
-				if (href) {
-					if (options.relative) {
-						if (href.match(/^\/[^/]/) && !href.match(/[:?#]/)) {
-							links.push(starting_url + href);
-							pageQueue.add(createPage.bind(null, page, href));
-						}
-					}
-				}
-			});
-			// console.log(page.links)
-			return pageQueue.start().then(function() {
-				return Page.findById(page._id).populate("links");
-			});
-		});
-};
 
 var starting_url = "https://en.wikipedia.org";
 
-var linksQueue = new BBQ({
-	concurrency: 1,
-	delay: 500
-});
+var linksQueue;
 
 var iterate;
 
+var createPage;
+
+var getLinks;
+
 module.exports = {
 	crawl: function(url) {
+		createPage = function(page, href) {
+			if (stop) return;
+			var childPage;
+			console.log(href);
+			return Page.create({
+					url: starting_url + href,
+					title: href.slice(6)
+				})
+				.then(function(cP) {
+					childPage = cP;
+					return Page.findByIdAndUpdate(page._id, {
+						$addToSet: {
+							links: childPage._id
+						},
+						$set: {
+							title: page.title
+						}
+					});
+
+				})
+				.then(function() {
+					crawlEmitter.emit("newNode", childPage);
+					setTimeout(function() {
+						crawlEmitter.emit("link", {
+							source: page._id,
+							target: childPage._id
+						});
+					}, 200);
+				})
+				.then(null, function(err) {
+					// linksQueue.queue.update(page._id, 1);
+					return Page.findOneAndUpdate({
+						url: starting_url + href
+					}, {
+						$inc: {
+							pageRank: 1
+						}
+					}).exec();
+				})
+				.then(function(updatedPage) {
+					if (updatedPage) {
+						crawlEmitter.emit("grow", updatedPage._id);
+						return Page.findByIdAndUpdate(page._id, {
+							$addToSet: {
+								links: updatedPage._id
+							},
+							$set: {
+								title: page.title
+							}
+						});
+					}
+				});
+		};
+		getLinks = function(page, options) {
+			if (stop) return;
+			for (var i = 0; i < robotstxt.length; i++) {
+				if (page.url.indexOf(robotstxt[i]) !== -1) {
+					return;
+				}
+			}
+			var pageQueue = new BBQ({
+				concurrency: 1,
+				delay: 600
+			});
+			return requestAsync(page.url)
+				.then(function(res) {
+					if (!res) return;
+					var $ = cheerio.load(res[0].body);
+					var links = [];
+					var anchorTags = $("a");
+					anchorTags.splice(25);
+					var title = $("head title").text();
+					title = title.slice(0, title.length - 35);
+					console.log(title);
+					page.title = title;
+					anchorTags.each(function() {
+						var href = $(this).attr('href');
+						if (href) {
+							if (options.relative) {
+								if (href.match(/^\/[^/]/) && !href.match(/[:?#]/)) {
+									links.push(starting_url + href);
+									pageQueue.add(createPage.bind(null, page, href));
+								}
+							}
+						}
+					});
+					// console.log(page.links)
+					return pageQueue.start().then(function() {
+						return Page.findById(page._id).populate("links");
+					});
+				});
+		};
 		iterate = function(page) {
 			if (stop) return;
 			return getLinks(page, {
@@ -136,6 +138,10 @@ module.exports = {
 					console.log("error", err);
 				});
 		};
+		linksQueue = new BBQ({
+			concurrency: 1,
+			delay: 500
+		});
 		io = require('../../io')();
 		return Page.remove().then(function() {
 				return fs.readFileAsync("./robots.txt");
@@ -160,12 +166,17 @@ module.exports = {
 			});
 	},
 	stop: function() {
-		// stop = true;
-		// setTimeout(function() {
-		// 	stop = false;
-		// }, 5000);
+		stop = true;
+		setTimeout(function() {
+			stop = false;
+		}, 5000);
 		// linksQueue.drain();
-		iterate = function(){};
+
+		createPage = function() {return new Promise(function(resolve, reject) {resolve();});};
+
+		getLinks = function() {return new Promise(function(resolve, reject) {resolve();});};
+		iterate = function(){return new Promise(function(resolve, reject) {resolve();});};
+		linksQueue = null;
 		return new Promise(function(resolve, reject) {
 			resolve();
 		});
