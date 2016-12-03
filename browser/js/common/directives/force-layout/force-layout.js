@@ -448,8 +448,8 @@ app.directive('forceLayout', function(PageService) {
 
             $scope.force = d3.layout.force()
                 .gravity(0.05)
-                .charge(-150)
-                .linkDistance(50)
+                .charge(-500)
+                .linkDistance(100)
                 .size([$scope.width, $scope.height]);
 
             var zoom = d3.behavior.zoom()
